@@ -13,6 +13,7 @@ import com.jcaa.usersmanagement.application.service.GetAllUsersService;
 import com.jcaa.usersmanagement.application.service.GetUserByIdService;
 import com.jcaa.usersmanagement.application.service.LoginService;
 import com.jcaa.usersmanagement.application.service.UpdateUserService;
+import com.jcaa.usersmanagement.infrastructure.adapter.accounts.AccountsRestClientAdapter;
 import com.jcaa.usersmanagement.infrastructure.adapter.email.JavaMailEmailSenderAdapter;
 import com.jcaa.usersmanagement.infrastructure.adapter.email.SmtpConfig;
 import com.jcaa.usersmanagement.infrastructure.adapter.persistence.config.DatabaseConfig;
@@ -37,6 +38,8 @@ public final class DependencyContainer {
   private static final String SMTP_FROM = "smtp.from.address";
   private static final String SMTP_FROM_NAME = "smtp.from.name";
 
+  private static final String ACCOUNTS_URL = "accounts.url";
+
   private final UserController userController;
 
   public DependencyContainer() {
@@ -49,11 +52,16 @@ public final class DependencyContainer {
         new JavaMailEmailSenderAdapter(buildSmtpConfig(properties));
     final EmailNotificationService emailNotification = new EmailNotificationService(emailSender);
 
+    final AccountsRestClientAdapter accountsClient =
+        new AccountsRestClientAdapter(
+            AccountsClientSpringConfig.buildAccountsRestClient(properties.get(ACCOUNTS_URL)));
+
     // Construir Validator para las validaciones en la capa de aplicación
     final Validator validator = ValidatorProvider.buildValidator();
 
     final CreateUserUseCase createUserUseCase =
-        new CreateUserService(userRepository, userRepository, emailNotification, validator);
+        new CreateUserService(
+            userRepository, userRepository, emailNotification, accountsClient, validator);
     final UpdateUserUseCase updateUserUseCase =
         new UpdateUserService(userRepository, userRepository, userRepository, emailNotification, validator);
     final DeleteUserUseCase deleteUserUseCase =

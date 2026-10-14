@@ -4,11 +4,13 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
+import com.jcaa.usersmanagement.application.port.out.CreateAccountPort;
 import com.jcaa.usersmanagement.application.port.out.GetUserByEmailPort;
 import com.jcaa.usersmanagement.application.port.out.SaveUserPort;
 import com.jcaa.usersmanagement.application.service.dto.command.CreateUserCommand;
 import com.jcaa.usersmanagement.domain.enums.UserRole;
 import com.jcaa.usersmanagement.domain.enums.UserStatus;
+import com.jcaa.usersmanagement.domain.exception.AccountCreationException;
 import com.jcaa.usersmanagement.domain.exception.UserAlreadyExistsException;
 import com.jcaa.usersmanagement.domain.model.UserModel;
 import com.jcaa.usersmanagement.domain.valueobject.UserEmail;
@@ -38,6 +40,7 @@ class CreateUserServiceTest {
   @Mock private SaveUserPort saveUserPort;
   @Mock private GetUserByEmailPort getUserByEmailPort;
   @Mock private EmailNotificationService emailNotificationService;
+  @Mock private CreateAccountPort createAccountPort;
 
   private CreateUserService service;
 
@@ -49,6 +52,7 @@ class CreateUserServiceTest {
               saveUserPort,
               getUserByEmailPort,
               emailNotificationService,
+              createAccountPort,
               validatorFactory.getValidator());
     }
   }
@@ -85,6 +89,41 @@ class CreateUserServiceTest {
 
     verify(saveUserPort).save(any(UserModel.class));
     verify(emailNotificationService).notifyUserCreated(savedUser, "Pass1234");
+    verify(createAccountPort).createAccountFor(savedUser);
+  }
+
+  // ── fallo del microservicio accounts
+
+  @Test
+  @DisplayName("execute() devuelve el usuario aunque accounts no pueda crear la cuenta")
+  void shouldReturnSavedUserWhenAccountCreationFails() {
+    // Arrange
+    final CreateUserCommand command =
+        new CreateUserCommand("u-03", "Ana Perez", "ana@example.com", "Pass1234", "MEMBER");
+
+    final UserModel savedUser =
+        new UserModel(
+            new UserId("u-03"),
+            new UserName("Ana Perez"),
+            new UserEmail("ana@example.com"),
+            UserPassword.fromPlainText("Pass1234"),
+            UserRole.MEMBER,
+            UserStatus.PENDING);
+
+    when(getUserByEmailPort.getByEmail(any())).thenReturn(Optional.empty());
+    when(saveUserPort.save(any())).thenReturn(savedUser);
+    doThrow(
+            AccountCreationException.becauseAccountsServiceFailed(
+                "u-03", new IllegalStateException("accounts caido")))
+        .when(createAccountPort)
+        .createAccountFor(savedUser);
+
+    // Act
+    final UserModel result = service.execute(command);
+
+    // Assert
+    assertSame(savedUser, result, "debe devolver el usuario guardado");
+    verify(emailNotificationService).notifyUserCreated(savedUser, "Pass1234");
   }
 
   // ── email duplicado
@@ -111,6 +150,7 @@ class CreateUserServiceTest {
     assertThrows(UserAlreadyExistsException.class, () -> service.execute(command));
     verify(saveUserPort, never()).save(any());
     verify(emailNotificationService, never()).notifyUserCreated(any(), any());
+    verify(createAccountPort, never()).createAccountFor(any());
   }
 
   // ── validación del command
@@ -125,6 +165,7 @@ class CreateUserServiceTest {
 
     // Act & Assert
     assertThrows(ConstraintViolationException.class, () -> service.execute(command));
-    verifyNoInteractions(saveUserPort, getUserByEmailPort, emailNotificationService);
+    verifyNoInteractions(
+        saveUserPort, getUserByEmailPort, emailNotificationService, createAccountPort);
   }
 }

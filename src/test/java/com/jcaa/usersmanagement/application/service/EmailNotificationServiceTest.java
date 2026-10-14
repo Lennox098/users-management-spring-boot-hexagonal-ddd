@@ -78,7 +78,7 @@ class EmailNotificationServiceTest {
             argThat(
                 dest ->
                     EMAIL.equals(dest.getDestinationEmail())
-                        && dest.getSubject().contains("creada")));
+                        && dest.getSubject().contains("Bienvenida")));
   }
 
   // ── notifyUserUpdated() — flujo feliz

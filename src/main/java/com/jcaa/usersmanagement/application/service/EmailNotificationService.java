@@ -19,7 +19,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class EmailNotificationService {
 
-  private static final String SUBJECT_CREATED = "Tu cuenta ha sido creada — Gestion de Usuarios";
+  private static final String SUBJECT_CREATED = "Bienvenida a Gestión de Usuarios";
   private static final String SUBJECT_UPDATED  = "Tu cuenta ha sido actualizada — Gestion de Usuarios";
 
   private static final String TOKEN_NAME     = "name";
