@@ -1,6 +1,7 @@
 package com.jcaa.usersmanagement.infrastructure.entrypoint.rest.controller;
 
 import com.jcaa.usersmanagement.infrastructure.entrypoint.rest.dto.request.CreateUserRestRequest;
+import com.jcaa.usersmanagement.infrastructure.entrypoint.rest.dto.request.LoginRestRequest;
 import com.jcaa.usersmanagement.infrastructure.entrypoint.rest.dto.request.UpdateUserRestRequest;
 import com.jcaa.usersmanagement.infrastructure.entrypoint.rest.dto.response.ApiErrorResponse;
 import com.jcaa.usersmanagement.infrastructure.entrypoint.rest.dto.response.UserRestResponse;
@@ -180,6 +181,39 @@ public interface UserRestControllerDocs {
           @PathVariable
           String id,
       @Valid @RequestBody UpdateUserRestRequest request);
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // POST /api/users/login
+  // ─────────────────────────────────────────────────────────────────────────────
+
+  @Operation(
+      summary = "Iniciar sesión",
+      description =
+          "Valida el correo y la contraseña. Solo pueden iniciar sesión los usuarios en estado ACTIVE.")
+  @ApiResponses({
+    @ApiResponse(
+        responseCode = "200",
+        description = "Credenciales válidas. Devuelve los datos del usuario.",
+        content =
+            @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = UserRestResponse.class))),
+    @ApiResponse(
+        responseCode = "400",
+        description = "Datos de entrada inválidos.",
+        content =
+            @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = ApiErrorResponse.class))),
+    @ApiResponse(
+        responseCode = "401",
+        description = "Correo o contraseña incorrectos, o el usuario no está activo.",
+        content =
+            @Content(
+                mediaType = "application/json",
+                schema = @Schema(implementation = ApiErrorResponse.class)))
+  })
+  UserRestResponse login(@Valid @RequestBody LoginRestRequest request);
 
   // ─────────────────────────────────────────────────────────────────────────────
   // DELETE /api/users/{id}

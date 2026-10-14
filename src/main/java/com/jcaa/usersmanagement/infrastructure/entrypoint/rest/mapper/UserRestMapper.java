@@ -2,10 +2,12 @@ package com.jcaa.usersmanagement.infrastructure.entrypoint.rest.mapper;
 
 import com.jcaa.usersmanagement.application.service.dto.command.CreateUserCommand;
 import com.jcaa.usersmanagement.application.service.dto.command.DeleteUserCommand;
+import com.jcaa.usersmanagement.application.service.dto.command.LoginCommand;
 import com.jcaa.usersmanagement.application.service.dto.command.UpdateUserCommand;
 import com.jcaa.usersmanagement.application.service.dto.query.GetUserByIdQuery;
 import com.jcaa.usersmanagement.domain.model.UserModel;
 import com.jcaa.usersmanagement.infrastructure.entrypoint.rest.dto.request.CreateUserRestRequest;
+import com.jcaa.usersmanagement.infrastructure.entrypoint.rest.dto.request.LoginRestRequest;
 import com.jcaa.usersmanagement.infrastructure.entrypoint.rest.dto.request.UpdateUserRestRequest;
 import com.jcaa.usersmanagement.infrastructure.entrypoint.rest.dto.response.UserRestResponse;
 import lombok.experimental.UtilityClass;
@@ -32,6 +34,10 @@ public class UserRestMapper {
         request.password(),
         request.role(),
         request.status());
+  }
+
+  public LoginCommand toLoginCommand(final LoginRestRequest request) {
+    return new LoginCommand(request.email(), request.password());
   }
 
   public GetUserByIdQuery toGetByIdQuery(final String id) {
